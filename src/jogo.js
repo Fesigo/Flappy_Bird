@@ -1,7 +1,7 @@
 const sprites = new Image();
-sprites.src = './imgs/sprites.png';
+sprites.src = './assets/imgs/sprites.png';
 const bird = new Image();
-bird.src = './imgs/bird.png'
+bird.src = './assets/imgs/bird.png'
 
 const canvas = document.querySelector('canvas');
 const contexto = canvas.getContext('2d');
@@ -37,7 +37,7 @@ const flappyBird = {
 
 // Land
 const chao = new Image();
-chao.src = './imgs/land.png'
+chao.src = './assets/imgs/land.png'
 const land = {
     spriteX: 0,
     spriteY: 0,
@@ -62,7 +62,7 @@ const land = {
 
 // Background
 const sky = new Image();
-sky.src = './imgs/sky.png'
+sky.src = './assets/imgs/sky.png'
 const background = {
     spriteX: 0,
     spriteY: 0,
@@ -87,18 +87,79 @@ const background = {
     }
 }
 
+// Initial screen
+const getReady = new Image();
+getReady.src = './assets/imgs/splash.png'
+const getReadyScreen = {
+    sX: 0,
+    sY: 0,
+    w: 188,
+    h: 170,
+    x: (canvas.width / 2) - 188 / 2,
+    y: 100,
+    desenha() {
+        contexto.drawImage(
+            getReady,
+            getReadyScreen.sX, getReadyScreen.sY, 
+            getReadyScreen.w, getReadyScreen.h,
+            getReadyScreen.x, getReadyScreen.y,
+            getReadyScreen.w, getReadyScreen.h
+        )
+    }
+}
+
+/**
+ * Telas
+*/
+let activeScreen = {};
+function changeToScreen(newScreen) {
+    activeScreen = newScreen;
+}
+
+const screens = {
+    jogo: {
+        desenha() {
+            background.desenha();
+            land.desenha();
+            flappyBird.desenha();
+        },
+        atualiza() {
+            flappyBird.atualiza();
+        }
+    },
+    inicio: {
+        desenha() {
+            background.desenha();
+            land.desenha();
+            flappyBird.desenha();
+            getReadyScreen.desenha();
+        },
+        click() {
+            changeToScreen(screens.jogo);
+        },
+        atualiza() {
+
+        }
+    }
+}
+
 function loop() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    
-    flappyBird.atualiza();
 
-    background.desenha();
-    land.desenha();
-    flappyBird.desenha();
-
+    activeScreen.desenha();
+    activeScreen.atualiza();
     
     requestAnimationFrame(loop);
 }
 
+window.addEventListener('click', () => {
+    // if (activeScreen.click()) {
+        activeScreen.click();
+    // }
+});
+
+changeToScreen(screens.inicio);
+
+console.log(activeScreen);
 loop();
