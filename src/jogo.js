@@ -1,10 +1,10 @@
 const hitSound = new Audio();
-hitSound.src = './assets/sounds/hit.wav';
+hitSound.src = './src/assets/sounds/hit.wav';
 
 const sprites = new Image();
-sprites.src = './assets/imgs/sprites.png';
+sprites.src = './src/assets/imgs/sprites.png';
 const bird = new Image();
-bird.src = './assets/imgs/bird.png'
+bird.src = './src/assets/imgs/bird.png'
 
 const canvas = document.querySelector('canvas');
 const contexto = canvas.getContext('2d');
@@ -73,7 +73,7 @@ function createFlappyBird() {
 
 // Land
 const chao = new Image();
-chao.src = './assets/imgs/land.png'
+chao.src = './src/assets/imgs/land.png'
 const land = {
     spriteX: 0,
     spriteY: 0,
@@ -98,7 +98,7 @@ const land = {
 
 // Background
 const sky = new Image();
-sky.src = './assets/imgs/sky.png'
+sky.src = './src/assets/imgs/sky.png'
 const background = {
     spriteX: 0,
     spriteY: 0,
@@ -125,7 +125,7 @@ const background = {
 
 // Initial screen
 const getReady = new Image();
-getReady.src = './assets/imgs/splash.png'
+getReady.src = './src/assets/imgs/splash.png'
 const getReadyScreen = {
     sX: 0,
     sY: 0,
