@@ -1,5 +1,8 @@
+let frames = 0;
+
 const hitSound = new Audio();
 hitSound.src = './src/assets/sounds/hit.wav';
+hitSound.volume = 0.4;
 
 const sprites = new Image();
 sprites.src = './src/assets/imgs/sprites.png';
@@ -42,7 +45,7 @@ function createFlappyBird() {
         gravidade: 0.25,
         velocidade: 0,
         atualiza() {
-            if (collide(flappyBird, land)) {
+            if (collide(flappyBird, globais.land)) {
 
                 hitSound.play();
 
@@ -56,10 +59,32 @@ function createFlappyBird() {
             flappyBird.velocidade += flappyBird.gravidade;
             flappyBird.y += flappyBird.velocidade;
         },
+        movimentos: [
+            { spriteX: 0,  spriteY: 0 }, // asa para cima
+            { spriteX: 0,  spriteY: 24 }, // asa no meio
+            { spriteX: 0,  spriteY:48 }, // asa para baixo
+            { spriteX: 0,  spriteY: 24 }, // asa no meio
+        ],
+        currentFrame: 0,
+        updateCurrentFrame() {
+
+            const framesInterval = 10;
+
+            if (frames % framesInterval === 0) {
+                const incrementBase = 1;
+                const increment = incrementBase + flappyBird.currentFrame;
+                const repeatBase = flappyBird.movimentos.length;
+                flappyBird.currentFrame = increment % repeatBase;
+            }
+
+
+        },
         desenha() {
+            flappyBird.updateCurrentFrame();
+            const { spriteX, spriteY } = this.movimentos[flappyBird.currentFrame];
             contexto.drawImage(
                 bird,
-                flappyBird.spriteX, flappyBird.spriteY, // Sprite X, Sprite Y
+                spriteX, spriteY, // Sprite X, Sprite Y
                 flappyBird.largura, flappyBird.altura,  // Tamanho do recorte na sprite
                 flappyBird.x, flappyBird.y,             // posição do pássaro no canvas
                 flappyBird.largura, flappyBird.altura   // tamanho do pássaro no canvas
@@ -72,29 +97,42 @@ function createFlappyBird() {
 }
 
 // Land
-const chao = new Image();
-chao.src = './src/assets/imgs/land.png'
-const land = {
-    spriteX: 0,
-    spriteY: 0,
-    largura: 336,
-    altura: 112,
-    x: 0,
-    y: canvas.height -112,
-    // x: 250,
-    // y: 200,
-    desenha() {
-        for(let i = 0; i * land.largura <= canvas.width; i++) {
-            contexto.drawImage(
-                chao,
-                land.spriteX, land.spriteY, 
-                land.largura, land.altura,
-                land.x + (i * land.largura), land.y,
-                land.largura, land.altura
-            )
+function createLand() {
+    const chao = new Image();
+    chao.src = './src/assets/imgs/land.png'
+    const land = {
+        spriteX: 0,
+        spriteY: 0,
+        largura: 336,
+        altura: 112,
+        x: 0,
+        y: canvas.height -112,
+        atualiza() {
+            const landMovement = 1;
+
+            const repeat = land.largura / 2;
+
+            const movement = land.x - landMovement;
+
+            land.x = movement % repeat;
+        },
+        desenha() {
+            for(let i = 0; i * land.largura <= canvas.width; i++) {
+                contexto.drawImage(
+                    chao,
+                    land.spriteX, land.spriteY, 
+                    land.largura, land.altura,
+                    land.x + (i * land.largura), land.y,
+                    land.largura, land.altura
+                )
+            }
         }
     }
+
+    return land;
 }
+
+
 
 // Background
 const sky = new Image();
@@ -163,10 +201,11 @@ const screens = {
     inicio: {
         inicializa() {
             globais.flappyBird = createFlappyBird();
+            globais.land = createLand();
         },
         desenha() {
             background.desenha();
-            land.desenha();
+            globais.land.desenha();
             globais.flappyBird.desenha();
             getReadyScreen.desenha();
         },
@@ -174,13 +213,13 @@ const screens = {
             changeToScreen(screens.jogo);
         },
         atualiza() {
-
+            globais.land.atualiza();
         }
     },
     jogo: {
         desenha() {
             background.desenha();
-            land.desenha();
+            globais.land.desenha();
             globais.flappyBird.desenha();
         },
         click() {
@@ -199,6 +238,7 @@ function loop() {
     activeScreen.desenha();
     activeScreen.atualiza();
     
+    frames++;
     requestAnimationFrame(loop);
 }
 
