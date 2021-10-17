@@ -4,6 +4,10 @@ const hitSound = new Audio();
 hitSound.src = './src/assets/sounds/hit.wav';
 hitSound.volume = 0.4;
 
+const jumpSound = new Audio();
+jumpSound.src = './src/assets/sounds/pulo.wav';
+jumpSound.volume = 0.4;
+
 const sprites = new Image();
 sprites.src = './src/assets/imgs/sprites.png';
 const bird = new Image();
@@ -40,6 +44,7 @@ function createFlappyBird() {
         y: 200,
         pulo: 4.6,
         jump() {
+            jumpSound.play();
             flappyBird.velocidade = -flappyBird.pulo;
         },
         gravidade: 0.25,
@@ -52,6 +57,7 @@ function createFlappyBird() {
                 setTimeout(() => {
                     changeToScreen(screens.inicio);
                 }, 500);
+                // changeToScreen(screens.gameOver);
 
                 return;
             }
@@ -191,7 +197,7 @@ function createPipes() {
             const flappyHead = globais.flappyBird.y;
             const flappyFoot = globais.flappyBird.y + globais.flappyBird.altura;
 
-            if(globais.flappyBird.x >= pair.x && globais.flappyBird.x <= pair.x + pipes.largura) {
+            if(globais.flappyBird.x + globais.flappyBird.largura >= pair.x && globais.flappyBird.x <= pair.x + pipes.largura) {
 
                 if(flappyHead <= pair.skyPipe.y) {
                     return true;
@@ -219,7 +225,11 @@ function createPipes() {
                 pair.x -= 2;
 
                 if (pipes.hasCollisionWithBird(pair)) {
-                    changeToScreen(screens.inicio);
+                    hitSound.play();
+                    setTimeout(() => {
+                        changeToScreen(screens.inicio);
+                    }, 500);
+                    // changeToScreen(screens.gameOver);
                 }
 
                 if(pair.x + pipes.largura <= 0) {
@@ -232,6 +242,32 @@ function createPipes() {
     }
 
     return pipes;
+}
+
+function createScore() {
+
+    const score = {
+        points: 0,
+
+        desenha() {
+            contexto.font = '60px "VT323"';
+            contexto.textAlign = 'right'
+            contexto.fillStyle = 'white'
+            // contexto.fillText(`${score.points}`, 50, 70);
+            contexto.fillText(`${score.points}`, canvas.width - 50, 70);
+        },
+
+        atualiza() {
+            const framesInterval = 85;
+
+            if (frames % framesInterval === 0) {
+                score.points += 1;
+            }
+        }
+
+    }
+
+    return score;
 }
 
 // Background
@@ -282,6 +318,25 @@ const getReadyScreen = {
     }
 }
 
+// Game over screen
+const gameOverMessage = {
+    sX: 134,
+    sY: 153,
+    w: 226,
+    h: 200,
+    x: (canvas.width / 2) - 226 / 2,
+    y: 100,
+    desenha() {
+        contexto.drawImage(
+            sprites,
+            gameOverMessage.sX, gameOverMessage.sY, 
+            gameOverMessage.w, gameOverMessage.h,
+            gameOverMessage.x, gameOverMessage.y,
+            gameOverMessage.w, gameOverMessage.h
+        )
+    }
+}
+
 /**
  * Telas
 */
@@ -317,12 +372,17 @@ const screens = {
             globais.land.atualiza();
         }
     },
+
     jogo: {
+        inicializa() {
+            globais.score = createScore();
+        },
         desenha() {
             background.desenha();
             globais.pipes.desenha();
             globais.land.desenha();
             globais.flappyBird.desenha();
+            globais.score.desenha();
         },
         click() {
             globais.flappyBird.jump();
@@ -331,8 +391,21 @@ const screens = {
             globais.pipes.atualiza();
             globais.land.atualiza();
             globais.flappyBird.atualiza();
+            globais.score.atualiza();
         }
     },
+
+    gameOver: {
+        desenha() {
+            gameOverMessage.desenha();
+        },
+        atualiza() {
+
+        },
+        click() {
+            changeToScreen(screens.inicio);
+        }
+    }
 }
 
 function loop() {
