@@ -132,7 +132,107 @@ function createLand() {
     return land;
 }
 
+function createPipes() {
+    const pipes = {
+        largura: 52,
+        altura: 408,
+        ground: {
+            spriteX: 0,
+            spriteY: 169
+        },
+        sky: {
+            spriteX: 52,
+            spriteY: 169
+        },
+        spaceBetween: 80,
+        desenha() {
+            
+            pipes.pairs.forEach(pair => {
+                const yRandom = pair.y;
+                const spacementBetweenPipes = 140;
 
+                const skyPipeX = pair.x;
+                const skyPipeY = yRandom;
+
+                // Cano de cima
+                contexto.drawImage(
+                    sprites,
+                    pipes.sky.spriteX, pipes.sky.spriteY,
+                    pipes.largura, pipes.altura,
+                    skyPipeX, skyPipeY,
+                    pipes.largura, pipes.altura
+                )
+    
+                const groundPipeX = pair.x;
+                const groundPipeY = pipes.altura + spacementBetweenPipes + yRandom;
+    
+                // Cano de baixo
+                contexto.drawImage(
+                    sprites,
+                    pipes.ground.spriteX, pipes.ground.spriteY,
+                    pipes.largura, pipes.altura,
+                    groundPipeX, groundPipeY,
+                    pipes.largura, pipes.altura
+                )
+
+                pair.skyPipe = {
+                    x: skyPipeX,
+                    y: pipes.altura + skyPipeY
+                }
+                pair.groundPipe = {
+                    x: groundPipeX,
+                    y: groundPipeY
+                }
+            })
+        },
+
+        hasCollisionWithBird(pair) {
+
+            const flappyHead = globais.flappyBird.y;
+            const flappyFoot = globais.flappyBird.y + globais.flappyBird.altura;
+
+            if(globais.flappyBird.x >= pair.x && globais.flappyBird.x <= pair.x + pipes.largura) {
+
+                if(flappyHead <= pair.skyPipe.y) {
+                    return true;
+                }
+
+                if(flappyFoot >= pair.groundPipe.y) {
+                    return true;
+                }
+            }
+
+            return false;
+        },
+
+        pairs: [],
+        atualiza() {
+            const passed100Frames= frames % 100 == 0;
+            if (passed100Frames) {
+                pipes.pairs.push({
+                    x: canvas.width,
+                    y: -150 * (Math.random() + 1),
+                })
+            }
+
+            pipes.pairs.forEach(pair => {
+                pair.x -= 2;
+
+                if (pipes.hasCollisionWithBird(pair)) {
+                    changeToScreen(screens.inicio);
+                }
+
+                if(pair.x + pipes.largura <= 0) {
+                    pipes.pairs.shift();
+                }
+            })
+
+        }
+
+    }
+
+    return pipes;
+}
 
 // Background
 const sky = new Image();
@@ -202,11 +302,12 @@ const screens = {
         inicializa() {
             globais.flappyBird = createFlappyBird();
             globais.land = createLand();
+            globais.pipes = createPipes();
         },
         desenha() {
             background.desenha();
-            globais.land.desenha();
             globais.flappyBird.desenha();
+            globais.land.desenha();
             getReadyScreen.desenha();
         },
         click() {
@@ -219,6 +320,7 @@ const screens = {
     jogo: {
         desenha() {
             background.desenha();
+            globais.pipes.desenha();
             globais.land.desenha();
             globais.flappyBird.desenha();
         },
@@ -226,6 +328,8 @@ const screens = {
             globais.flappyBird.jump();
         },
         atualiza() {
+            globais.pipes.atualiza();
+            globais.land.atualiza();
             globais.flappyBird.atualiza();
         }
     },
@@ -250,5 +354,5 @@ window.addEventListener('click', () => {
 
 changeToScreen(screens.inicio);
 
-console.log(activeScreen);
+// console.log(activeScreen);
 loop();
