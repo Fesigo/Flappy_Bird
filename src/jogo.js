@@ -16,8 +16,13 @@ bird.src = './src/assets/imgs/bird.png'
 const canvas = document.querySelector('canvas');
 const contexto = canvas.getContext('2d');
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = 1366;
+canvas.height = 657;
+
+const client = new WebSocket('ws://localhost:3003');
+client.onopen = function() {
+    console.log('WebSocket working');
+}
 
 function collide(flappyBird, land) {
 
@@ -46,6 +51,7 @@ function createFlappyBird() {
         jump() {
             jumpSound.play();
             flappyBird.velocidade = -flappyBird.pulo;
+            client.send(flappyBird.velocidade);
         },
         gravidade: 0.25,
         velocidade: 0,
@@ -56,6 +62,7 @@ function createFlappyBird() {
 
                 setTimeout(() => {
                     changeToScreen(screens.inicio);
+                    client.send('died');
                 }, 500);
                 // changeToScreen(screens.gameOver);
 
@@ -123,7 +130,7 @@ function createLand() {
             land.x = movement % repeat;
         },
         desenha() {
-            for(let i = 0; i * land.largura <= canvas.width; i++) {
+            for(let i = 0; i * land.largura <= canvas.width * 2; i++) {
                 contexto.drawImage(
                     chao,
                     land.spriteX, land.spriteY, 
@@ -216,8 +223,10 @@ function createPipes() {
             const passed100Frames= frames % 100 == 0;
             if (passed100Frames) {
                 pipes.pairs.push({
-                    x: canvas.width,
-                    y: -150 * (Math.random() + 1),
+                    x:  window.location.pathname === '/screenright' ? canvas.width : canvas.width * 2 + 100,
+                    // x: canvas.width,
+                    // y: -150 * (Math.random() + 1),
+                    y: -150 * 1.5,
                 })
             }
 
@@ -228,6 +237,7 @@ function createPipes() {
                     hitSound.play();
                     setTimeout(() => {
                         changeToScreen(screens.inicio);
+                        client.send('died');
                     }, 500);
                     // changeToScreen(screens.gameOver);
                 }
@@ -358,19 +368,36 @@ const screens = {
             globais.flappyBird = createFlappyBird();
             globais.land = createLand();
             globais.pipes = createPipes();
+            if(window.location.pathname === '/screenright') {
+                globais.flappyBird.x -= canvas.width;
+            } else {
+                globais.pipes.x = canvas.width * 2
+            }
         },
         desenha() {
             background.desenha();
             globais.flappyBird.desenha();
             globais.land.desenha();
             getReadyScreen.desenha();
+
+            if(window.location.pathname === '/screenright') {
+                getReadyScreen.x = ((canvas.width / 2) - 188 / 2) - canvas.width / 2;
+            }
+            else {
+                getReadyScreen.x = ((canvas.width) - 188 / 2);
+            }
+
+            // if(window.location.pathname === '/screenright') {
+            //     globais.flappyBird.x -= canvas.width
+            // }
         },
         click() {
             changeToScreen(screens.jogo);
         },
         atualiza() {
             globais.land.atualiza();
-        }
+        },
+        initialScreen: true
     },
 
     jogo: {
@@ -382,7 +409,11 @@ const screens = {
             globais.pipes.desenha();
             globais.land.desenha();
             globais.flappyBird.desenha();
-            globais.score.desenha();
+            
+            if(window.location.pathname === '/screenright') {
+                globais.score.desenha();
+                globais.flappyBird.x -= canvas.width
+            }
         },
         click() {
             globais.flappyBird.jump();
@@ -419,13 +450,24 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
+function sendMessage() {
+    client.send(globais.flappyBird.velocidade);
+}
+
 window.addEventListener('click', () => {
     if (activeScreen.click()) {
         activeScreen.click();
     }
+    sendMessage();
 });
 
 changeToScreen(screens.inicio);
 
-// console.log(activeScreen);
 loop();
+
+client.onmessage = event => {
+    // console.log(event.data);
+    if (activeScreen.initialScreen) changeToScreen(screens.jogo);
+    if (event.data == 'died') changeToScreen(screens.inicio);
+    globais.flappyBird.velocidade = -globais.flappyBird.pulo;
+}
