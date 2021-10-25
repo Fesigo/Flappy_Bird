@@ -5,8 +5,6 @@ const http = require('http');
 const app = express();
 const server = http.createServer(app);
 
-
-// const io = require('socket.io')(server);
 var WebSocketServer = require('websocket').server;
 
 app.use(express.static(__dirname));

@@ -162,7 +162,7 @@ function createPipes() {
             
             pipes.pairs.forEach(pair => {
                 const yRandom = pair.y;
-                const spacementBetweenPipes = 140;
+                const spacementBetweenPipes = 100;
 
                 const skyPipeX = pair.x;
                 const skyPipeY = yRandom;
@@ -219,15 +219,67 @@ function createPipes() {
         },
 
         pairs: [],
+        pairsAux: [
+            {
+                x: null,
+                y: -225
+            },
+            {
+                x: null,
+                y: -150
+            },
+            {
+                x: null,
+                y: -150 * 1.8
+            },
+            {
+                x: null,
+                y: -150 * 1.4
+            },
+            {
+                x: null,
+                y: -150 * 2
+            },
+            {
+                x: null,
+                y: -150 * 1.1
+            },
+            {
+                x: null,
+                y: -150 * 1.7
+            },
+            {
+                x: null,
+                y: -150 * 1.3
+            },
+            {
+                x: null,
+                y: -150 * 1.5
+            },
+            {
+                x: null,
+                y: -150
+            },
+            {
+                x: null,
+                y: -150 * 1.8
+            },
+            {
+                x: null,
+                y: -125
+            }
+        ],
         atualiza() {
             const passed100Frames= frames % 100 == 0;
             if (passed100Frames) {
-                pipes.pairs.push({
-                    x:  window.location.pathname === '/screenright' ? canvas.width : canvas.width * 2 + 100,
-                    // x: canvas.width,
-                    // y: -150 * (Math.random() + 1),
-                    y: -150 * 1.5,
-                })
+
+                pipeAux = this.pairsAux.shift();
+                pipeAux.x = window.location.pathname === '/screenright' ? canvas.width : canvas.width * 2 + 100
+                pipes.pairs.push(pipeAux);
+                this.pairsAux.push({
+                    x: null,
+                    y: pipeAux.y
+                });
             }
 
             pipes.pairs.forEach(pair => {
