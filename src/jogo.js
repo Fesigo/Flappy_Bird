@@ -1,12 +1,14 @@
+import Background from './entities/background.js';
+import FlappyBird from './entities/bird.js';
+import Land from './entities/land.js';
+import Pipes from './entities/pipes.js';
+import Score from './entities/score.js';
+
 let frames = 0; // frame counter
 
 const hitSound = new Audio();
 hitSound.src = './src/assets/sounds/hit.wav';
 hitSound.volume = 0.4;
-
-const jumpSound = new Audio();
-jumpSound.src = './src/assets/sounds/pulo.wav';
-jumpSound.volume = 0.4;
 
 const sprites = new Image();
 sprites.src = './src/assets/imgs/sprites.png';
@@ -25,103 +27,61 @@ client.onopen = function() {
     console.log('WebSocket working');
 }
 
-//function to check the collision between the bird and the land
-function collide(flappyBird, land) {
-
-    const birdY = flappyBird.y + flappyBird.altura;
-    const landY = land.y;
-
-    if (birdY >= landY) {
-        return true;
-    }
-
-    return false;
-
-}
-
 // function to create a flappybird object
 function createFlappyBird() {
 
     // Bird
-    const flappyBird = {
-        spriteX: 0,
-        spriteY: 0,
-        largura: 34,
-        altura: 24,
-        x: 250,
-        y: 200,
-        pulo: 4.6,
+    const flappyBird = new FlappyBird();
 
-        // function that implements the bird's jump
-        jump() {
-            jumpSound.play();
-            flappyBird.velocidade = -flappyBird.pulo;
-            client.send(flappyBird.velocidade);
-        },
-        gravidade: 0.25,
-        velocidade: 0,
+    // function to update the bird's Y
+    flappyBird.atualiza = () => {
 
-        // function to update the bird's Y
-        atualiza() {
+        // checking collision
+        if (flappyBird.collide(flappyBird, globais.land)) {
 
-            // checking collision
-            if (collide(flappyBird, globais.land)) {
+            hitSound.play();
 
-                hitSound.play();
+            setTimeout(() => {
+                changeToScreen(screens.inicio);
+                client.send('died');
+            }, 500);
+            // changeToScreen(screens.gameOver);
 
-                setTimeout(() => {
-                    changeToScreen(screens.inicio);
-                    client.send('died');
-                }, 500);
-                // changeToScreen(screens.gameOver);
-
-                return;
-            }
-
-            flappyBird.velocidade += flappyBird.gravidade;
-            flappyBird.y += flappyBird.velocidade;
-        },
-
-        // array of sprites of the bird in different positions to make the flying animation
-        movimentos: [
-            { spriteX: 0,  spriteY: 0 }, // wings up
-            { spriteX: 0,  spriteY: 24 }, // wings in the middle
-            { spriteX: 0,  spriteY:48 }, // wings down
-            { spriteX: 0,  spriteY: 24 }, // wings in the middle
-        ],
-        currentFrame: 0,
-
-        // changing the bird's sprite according to the frames
-        updateCurrentFrame() {
-
-            const framesInterval = 10;
-
-            if (frames % framesInterval === 0) {
-                const incrementBase = 1;
-                const increment = incrementBase + flappyBird.currentFrame;
-                const repeatBase = flappyBird.movimentos.length;
-                flappyBird.currentFrame = increment % repeatBase;
-            }
-
-
-        },
-
-        // function to draw the bird in the canvas
-        desenha() {
-            flappyBird.updateCurrentFrame();
-            const { spriteX, spriteY } = this.movimentos[flappyBird.currentFrame];
-            contexto.drawImage(
-                bird,
-                spriteX, spriteY,
-                flappyBird.largura, flappyBird.altura,
-                flappyBird.x, flappyBird.y,
-                flappyBird.largura, flappyBird.altura
-            );
+            return;
         }
+
+        flappyBird.velocidade += flappyBird.gravidade;
+        flappyBird.y += flappyBird.velocidade;
+    }
+
+    // changing the bird's sprite according to the frames
+    flappyBird.updateCurrentFrame = () => {
+
+        const framesInterval = 10;
+
+        if (frames % framesInterval === 0) {
+            const incrementBase = 1;
+            const increment = incrementBase + flappyBird.currentFrame;
+            const repeatBase = flappyBird.movimentos.length;
+            flappyBird.currentFrame = increment % repeatBase;
+        }
+
+    }
+
+    // function to draw the bird in the canvas
+    flappyBird.desenha = () => {
+        flappyBird.updateCurrentFrame();
+        const { spriteX, spriteY } = flappyBird.movimentos[flappyBird.currentFrame];
+        contexto.drawImage(
+            bird,
+            spriteX, spriteY,
+            flappyBird.largura, flappyBird.altura,
+            flappyBird.x, flappyBird.y,
+            flappyBird.largura, flappyBird.altura
+        );
     }
 
     return flappyBird;
-
 }
 
 // function to create a land object
@@ -129,36 +89,18 @@ function createLand() {
     // Land
     const chao = new Image();
     chao.src = './src/assets/imgs/land.png'
-    const land = {
-        spriteX: 0,
-        spriteY: 0,
-        largura: 336,
-        altura: 112,
-        x: 0,
-        y: canvas.height -112,
+    const land = new Land(canvas.height);
 
-        // function to update the land's X, making the animation
-        atualiza() {
-            const landMovement = 1;
-
-            const repeat = land.largura / 2;
-
-            const movement = land.x - landMovement;
-
-            land.x = movement % repeat;
-        },
-
-        // function to draw the land in the canvas
-        desenha() {
-            for(let i = 0; i * land.largura <= canvas.width * 2; i++) {
-                contexto.drawImage(
-                    chao,
-                    land.spriteX, land.spriteY, 
-                    land.largura, land.altura,
-                    land.x + (i * land.largura), land.y,
-                    land.largura, land.altura
-                )
-            }
+    // function to draw the land in the canvas
+    land.desenha = () => {
+        for(let i = 0; i * land.largura <= canvas.width * 2; i++) {
+            contexto.drawImage(
+                chao,
+                land.spriteX, land.spriteY, 
+                land.largura, land.altura,
+                land.x + (i * land.largura), land.y,
+                land.largura, land.altura
+            )
         }
     }
 
@@ -167,168 +109,103 @@ function createLand() {
 
 // function to create pipes objects
 function createPipes() {
-    const pipes = {
-        largura: 52,
-        altura: 408,
-        ground: {
-            spriteX: 0,
-            spriteY: 169
-        },
-        sky: {
-            spriteX: 52,
-            spriteY: 169
-        },
-        spaceBetween: 80,
+    const pipes = new Pipes();
 
-        // function to draw the pairs of pipes in the canvas
-        desenha() {
-            
-            pipes.pairs.forEach(pair => {
-                const yRandom = pair.y;
-                const spacementBetweenPipes = 100;
+    // function to draw the pairs of pipes in the canvas
+    pipes.desenha = () => {
+        
+        pipes.pairs.forEach(pair => {
+            const yRandom = pair.y;
+            const spacementBetweenPipes = 100;
 
-                const skyPipeX = pair.x;
-                const skyPipeY = yRandom;
+            const skyPipeX = pair.x;
+            const skyPipeY = yRandom;
 
-                // top pipe
-                contexto.drawImage(
-                    sprites,
-                    pipes.sky.spriteX, pipes.sky.spriteY,
-                    pipes.largura, pipes.altura,
-                    skyPipeX, skyPipeY,
-                    pipes.largura, pipes.altura
-                )
-    
-                const groundPipeX = pair.x;
-                const groundPipeY = pipes.altura + spacementBetweenPipes + yRandom;
-    
-                // bottom pipe
-                contexto.drawImage(
-                    sprites,
-                    pipes.ground.spriteX, pipes.ground.spriteY,
-                    pipes.largura, pipes.altura,
-                    groundPipeX, groundPipeY,
-                    pipes.largura, pipes.altura
-                )
+            // top pipe
+            contexto.drawImage(
+                sprites,
+                pipes.sky.spriteX, pipes.sky.spriteY,
+                pipes.largura, pipes.altura,
+                skyPipeX, skyPipeY,
+                pipes.largura, pipes.altura
+            )
 
-                // adjusting the height of the pipes according to the ground and the sky
-                pair.skyPipe = {
-                    x: skyPipeX,
-                    y: pipes.altura + skyPipeY
-                }
-                pair.groundPipe = {
-                    x: groundPipeX,
-                    y: groundPipeY
-                }
-            })
-        },
+            const groundPipeX = pair.x;
+            const groundPipeY = pipes.altura + spacementBetweenPipes + yRandom;
 
-        // function to check the collision between the bird and the pipes
-        hasCollisionWithBird(pair) {
+            // bottom pipe
+            contexto.drawImage(
+                sprites,
+                pipes.ground.spriteX, pipes.ground.spriteY,
+                pipes.largura, pipes.altura,
+                groundPipeX, groundPipeY,
+                pipes.largura, pipes.altura
+            )
 
-            const flappyHead = globais.flappyBird.y;
-            const flappyFoot = globais.flappyBird.y + globais.flappyBird.altura;
+            // adjusting the height of the pipes according to the ground and the sky
+            pair.skyPipe = {
+                x: skyPipeX,
+                y: pipes.altura + skyPipeY
+            }
+            pair.groundPipe = {
+                x: groundPipeX,
+                y: groundPipeY
+            }
+        })
+    },
 
-            if(globais.flappyBird.x + globais.flappyBird.largura >= pair.x && globais.flappyBird.x <= pair.x + pipes.largura) {
+    // function to check the collision between the bird and the pipes
+    pipes.hasCollisionWithBird = (pair) => {
 
-                if(flappyHead <= pair.skyPipe.y) {
-                    return true;
-                }
+        const flappyHead = globais.flappyBird.y;
+        const flappyFoot = globais.flappyBird.y + globais.flappyBird.altura;
 
-                if(flappyFoot >= pair.groundPipe.y) {
-                    return true;
-                }
+        if(globais.flappyBird.x + globais.flappyBird.largura >= pair.x && globais.flappyBird.x <= pair.x + pipes.largura) {
+
+            if(flappyHead <= pair.skyPipe.y) {
+                return true;
             }
 
-            return false;
-        },
-
-        pairs: [], // array for the pipes that will be draw
-        pairsAux: [ // predefined array of pipes
-            {
-                x: null,
-                y: -225
-            },
-            {
-                x: null,
-                y: -150
-            },
-            {
-                x: null,
-                y: -150 * 1.8
-            },
-            {
-                x: null,
-                y: -150 * 1.4
-            },
-            {
-                x: null,
-                y: -150 * 2
-            },
-            {
-                x: null,
-                y: -150 * 1.1
-            },
-            {
-                x: null,
-                y: -150 * 1.7
-            },
-            {
-                x: null,
-                y: -150 * 1.3
-            },
-            {
-                x: null,
-                y: -150 * 1.5
-            },
-            {
-                x: null,
-                y: -150
-            },
-            {
-                x: null,
-                y: -150 * 1.8
-            },
-            {
-                x: null,
-                y: -125
+            if(flappyFoot >= pair.groundPipe.y) {
+                return true;
             }
-        ],
-
-        // function to update the position of the pipes
-        atualiza() {
-            const passed100Frames= frames % 100 == 0;
-            if (passed100Frames) { // drawing nem pair of pipes every 100 frames
-
-                pipeAux = this.pairsAux.shift(); // removing the first pipe of the predefined array
-                pipeAux.x = window.location.pathname === '/screenright' ? canvas.width : canvas.width * 2 + 100 // setting its X position according to the screen that is being used
-                pipes.pairs.push(pipeAux); // pushing the pair of pipe into the pairs array, that will be used to draw the pipes
-                this.pairsAux.push({ // pushing the removed pair back at the end of the predefined array
-                    x: null,
-                    y: pipeAux.y
-                });
-            }
-
-            // changing the pairs X position / animating the pipes
-            pipes.pairs.forEach(pair => {
-                pair.x -= 2;
-
-                // checking collision between the bird and the pipe
-                if (pipes.hasCollisionWithBird(pair)) {
-                    hitSound.play();
-                    setTimeout(() => {
-                        changeToScreen(screens.inicio);
-                        client.send('died');
-                    }, 500);
-                    // changeToScreen(screens.gameOver);
-                }
-
-                // if(pair.x + pipes.largura <= 0) {
-                //     pipes.pairs.shift();
-                // }
-            })
-
         }
+
+        return false;
+    }
+
+    // function to update the position of the pipes
+    pipes.atualiza = () => {
+        const passed100Frames= frames % 100 == 0;
+        if (passed100Frames) { // drawing nem pair of pipes every 100 frames
+
+            let pipeAux = pipes.pairsAux.shift(); // removing the first pipe of the predefined array
+            pipeAux.x = window.location.pathname === '/screenright' ? canvas.width : canvas.width * 2 + 100 // setting its X position according to the screen that is being used
+            pipes.pairs.push(pipeAux); // pushing the pair of pipe into the pairs array, that will be used to draw the pipes
+            pipes.pairsAux.push({ // pushing the removed pair back at the end of the predefined array
+                x: null,
+                y: pipeAux.y
+            });
+        }
+
+        // changing the pairs X position / animating the pipes
+        pipes.pairs.forEach(pair => {
+            pair.x -= 2;
+
+            // checking collision between the bird and the pipe
+            if (pipes.hasCollisionWithBird(pair)) {
+                hitSound.play();
+                setTimeout(() => {
+                    changeToScreen(screens.inicio);
+                    client.send('died');
+                }, 500);
+                // changeToScreen(screens.gameOver);
+            }
+
+            // if(pair.x + pipes.largura <= 0) {
+            //     pipes.pairs.shift();
+            // }
+        })
 
     }
 
@@ -338,27 +215,24 @@ function createPipes() {
 // function to create the score object
 function createScore() {
 
-    const score = {
-        points: 0,
+    const score = new Score()
 
-        // function to draw the score in the canvas
-        desenha() {
-            contexto.font = '60px "VT323"';
-            contexto.textAlign = 'right'
-            contexto.fillStyle = 'white'
-            // contexto.fillText(`${score.points}`, 50, 70);
-            contexto.fillText(`${score.points}`, canvas.width - 50, 70);
-        },
+    // function to draw the score in the canvas
+    score.desenha = () => {
+        contexto.font = '60px "VT323"';
+        contexto.textAlign = 'right'
+        contexto.fillStyle = 'white'
+        // contexto.fillText(`${score.points}`, 50, 70);
+        contexto.fillText(`${score.points}`, canvas.width - 50, 70);
+    },
 
-        // function to update the score value
-        atualiza() {
-            const framesInterval = 85;
+    // function to update the score value
+    score.atualiza = () => {
+        const framesInterval = 85;
 
-            if (frames % framesInterval === 0) {
-                score.points += 1;
-            }
+        if (frames % framesInterval === 0) {
+            score.points += 1;
         }
-
     }
 
     return score;
@@ -367,29 +241,22 @@ function createScore() {
 // Background
 const sky = new Image();
 sky.src = './src/assets/imgs/sky.png'
-const background = {
-    spriteX: 0,
-    spriteY: 0,
-    largura: 276,
-    altura: 109,
-    x: 0,
-    y: canvas.height - 221,
+const background = new Background(canvas.height);
 
-    // drawing the background in the canvas
-    desenha() {
+// drawing the background in the canvas
+background.desenha = () => {
 
-        contexto.fillStyle = '#4ec0ca';
-        contexto.fillRect(0,0, canvas.width, canvas.height);
+    contexto.fillStyle = '#4ec0ca';
+    contexto.fillRect(0,0, canvas.width, canvas.height);
 
-        for(let i = 0; i * background.largura <= canvas.width; i++) {
-            contexto.drawImage(
-                sky,
-                background.spriteX, background.spriteY,
-                background.largura, background.altura,
-                background.x + i * background.largura, background.y,
-                background.largura, background.altura
-            );
-        }
+    for(let i = 0; i * background.largura <= canvas.width; i++) {
+        contexto.drawImage(
+            sky,
+            background.spriteX, background.spriteY,
+            background.largura, background.altura,
+            background.x + i * background.largura, background.y,
+            background.largura, background.altura
+        );
     }
 }
 
