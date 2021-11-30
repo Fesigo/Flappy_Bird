@@ -215,7 +215,7 @@ function createPipes() {
 // function to create the score object
 function createScore() {
 
-    const score = new Score()
+    const score = new Score();
 
     // function to draw the score in the canvas
     score.desenha = () => {
@@ -228,11 +228,21 @@ function createScore() {
 
     // function to update the score value
     score.atualiza = () => {
-        const framesInterval = 85;
+        // const framesInterval = 85;
 
-        if (frames % framesInterval === 0) {
-            score.points += 1;
-        }
+        // if (frames % framesInterval === 0) {
+        //     score.points += 1;
+        // }
+
+        globais.pipes.pairs.forEach(pair => {
+    
+            if(globais.flappyBird.x + globais.flappyBird.largura == pair.x + globais.pipes.largura) {
+    
+                // console.log(score.points);
+                score.points += 1;
+                client.send(globais.score.points);
+            }
+        })
     }
 
     return score;
@@ -435,7 +445,8 @@ function loop() {
 
 // sending flappyBird.velocidade through websocket connection
 function sendMessage() {
-    client.send(globais.flappyBird.velocidade);
+    client.send('jump');
+    // client.send(globais.score.points);
 }
 
 
@@ -456,5 +467,6 @@ client.onmessage = event => {
     // console.log(event.data);
     if (activeScreen.initialScreen) changeToScreen(screens.jogo); // changing from the initial screen to the game screen in all clients connected
     if (event.data == 'died') changeToScreen(screens.inicio); // changing from the game screen to the initial screen in all clients connected, when the bird dies
-    globais.flappyBird.velocidade = -globais.flappyBird.pulo; // updating the bird's Y position in all clients connected
+    if (event.data == 'jump') globais.flappyBird.velocidade = -globais.flappyBird.pulo; // updating the bird's Y position in all clients connected
+    if (!isNaN(event.data)) globais.score.points = Number(event.data);
 }
