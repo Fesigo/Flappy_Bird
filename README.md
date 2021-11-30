@@ -17,6 +17,7 @@
 3. In the third one use the route /controller and position it as your prefer
 
 ![BrowserExample](/src/assets/imgs/browser_example.png)
-3. Enjoy!
+
+4. Enjoy!
 
 ![Game](/src/assets/imgs/game.png)
