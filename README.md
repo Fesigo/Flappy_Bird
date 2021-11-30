@@ -12,8 +12,11 @@
 3. run `npm start`
 
 ## How to Play
-1. Open 2 browser windows with localhost:3003
-2. Positionate them like the image bellow. In the right one, use the /screenright route
+1. Open 3 browser windows with localhost:3003
+2. Position 2 of them like the image bellow. In the right one, use the /screenright route
+3. In the third one use the route /controller and position it as your prefer
 
 ![BrowserExample](/src/assets/imgs/browser_example.png)
 3. Enjoy!
+
+![Game](/src/assets/imgs/game.png)

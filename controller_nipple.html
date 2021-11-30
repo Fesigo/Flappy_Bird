@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controller</title>
+    <style>
+        #zone_joystick {
+            width: 100%;
+            height: 100vh;
+        }
+
+        body {
+            background-color: #4ec0ca;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="zone_joystick"></div>
+
+    <script>
+        const client = new WebSocket('ws://localhost:3003');
+        client.onopen = function () {
+            console.log('WebSocket working - controller');
+        }
+
+        // sending jump message through websocket connection
+        function sendMessage() {
+            client.send('jump');
+            // client.send(globais.score.points);
+        }
+
+
+        window.addEventListener('click', () => {
+            // checks if the current screen has a click function and the executes it
+            // if (activeScreen.click()) {
+            //     activeScreen.click();
+            // }
+            sendMessage();
+        });
+
+    </script>
+    <script type="text/javascript" src="./nipplejs.js"></script>
+    <script type="text/javascript">
+        var options = {
+            color: 'red',
+            zone: document.getElementById('zone_joystick'),
+        };
+        var manager = nipplejs.create(options);
+    </script>
+</body>
+
+</html>

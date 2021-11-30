@@ -39,13 +39,15 @@ function createFlappyBird() {
         // checking collision
         if (flappyBird.collide(flappyBird, globais.land)) {
 
-            hitSound.play();
+            if (window.location.pathname !== '/screenright') {
+                hitSound.play();
+                setTimeout(() => {
+                    changeToScreen(screens.inicio);
+                    client.send('died');
+                }, 500);
+                // changeToScreen(screens.gameOver);
+            }
 
-            setTimeout(() => {
-                changeToScreen(screens.inicio);
-                client.send('died');
-            }, 500);
-            // changeToScreen(screens.gameOver);
 
             return;
         }
@@ -194,12 +196,14 @@ function createPipes() {
 
             // checking collision between the bird and the pipe
             if (pipes.hasCollisionWithBird(pair)) {
-                hitSound.play();
-                setTimeout(() => {
-                    changeToScreen(screens.inicio);
-                    client.send('died');
-                }, 500);
-                // changeToScreen(screens.gameOver);
+                if (window.location.pathname !== '/screenright') {
+                    hitSound.play();
+                    setTimeout(() => {
+                        changeToScreen(screens.inicio);
+                        client.send('died');
+                    }, 500);
+                    // changeToScreen(screens.gameOver);
+                }
             }
 
             // if(pair.x + pipes.largura <= 0) {
@@ -443,20 +447,20 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
-// sending flappyBird.velocidade through websocket connection
-function sendMessage() {
-    client.send('jump');
-    // client.send(globais.score.points);
-}
+// // sending flappyBird.velocidade through websocket connection
+// function sendMessage() {
+//     client.send('jump');
+//     // client.send(globais.score.points);
+// }
 
 
-window.addEventListener('click', () => {
-    // checks if the current screen has a click function and the executes it
-    if (activeScreen.click()) {
-        activeScreen.click();
-    }
-    sendMessage();
-});
+// window.addEventListener('click', () => {
+//     // checks if the current screen has a click function and the executes it
+//     if (activeScreen.click()) {
+//         activeScreen.click();
+//     }
+//     sendMessage();
+// });
 
 changeToScreen(screens.inicio); // beggining with the initial screen
 
@@ -467,6 +471,11 @@ client.onmessage = event => {
     // console.log(event.data);
     if (activeScreen.initialScreen) changeToScreen(screens.jogo); // changing from the initial screen to the game screen in all clients connected
     if (event.data == 'died') changeToScreen(screens.inicio); // changing from the game screen to the initial screen in all clients connected, when the bird dies
-    if (event.data == 'jump') globais.flappyBird.velocidade = -globais.flappyBird.pulo; // updating the bird's Y position in all clients connected
+    if (event.data == 'jump') {
+        if (activeScreen.click()) {
+            activeScreen.click();
+        }
+        globais.flappyBird.velocidade = -globais.flappyBird.pulo; // updating the bird's Y position in all clients connected
+    }
     if (!isNaN(event.data)) globais.score.points = Number(event.data);
 }

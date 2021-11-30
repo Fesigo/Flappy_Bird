@@ -19,6 +19,13 @@ app.get('/screenright', (req, res) => {
     res.sendFile(path.join(__dirname, '/index.html'));
 })
 
+app.use(express.static(__dirname+'/public'));
+
+// route for the controller
+app.get('/controller', (req, res) => {
+    res.sendFile(path.join(__dirname, '/controller_nipple.html'));
+})
+
 const port = 3003;
 
 server.listen(port, () => console.log(`Server started on port ${port}`));
